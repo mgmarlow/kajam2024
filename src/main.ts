@@ -181,7 +181,7 @@ scene("game", (levelData: string[]) => {
     const moves: Action[] = [];
 
     if (playerDest) {
-      if (playerDest.is("exit")) {
+      if (playerDest.is("exit") && player.is("ghost")) {
         currentLevel++;
         if (levels[currentLevel]) {
           go("selected", levels[currentLevel]);
