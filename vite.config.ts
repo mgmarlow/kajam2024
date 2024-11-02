@@ -1,7 +1,9 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
-    build: {
-        sourcemap: true,
-    },
+  base: "./",
+  build: {
+    sourcemap: false,
+    outDir: "www",
+  },
 });

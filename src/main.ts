@@ -7,12 +7,12 @@ kaplay({
 
 const TILE_SIZE = 64;
 
-loadSprite("kat", "sprites/kat.png");
-loadSprite("ghost", "sprites/ghosty.png");
-loadSprite("wall", "sprites/steel.png");
-loadSprite("spike", "sprites/spike.png");
-loadSprite("exit", "sprites/portal.png");
-loadSprite("box", "sprites/grass.png");
+loadSprite("kat", "./sprites/kat.png");
+loadSprite("ghost", "./sprites/ghosty.png");
+loadSprite("wall", "./sprites/steel.png");
+loadSprite("spike", "./sprites/spike.png");
+loadSprite("exit", "./sprites/portal.png");
+loadSprite("box", "./sprites/grass.png");
 
 // Level and Tile components don't sync the level's spatialMap
 // when using a tile's moveRight/move* methods. That means we
