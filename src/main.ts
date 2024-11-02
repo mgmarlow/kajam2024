@@ -14,8 +14,11 @@ loadSprite("spike", "sprites/spike.png");
 loadSprite("exit", "sprites/portal.png");
 loadSprite("box", "sprites/grass.png");
 
-// Custom component because level/tite don't update
-// their spatial map correctly.
+// Level and Tile components don't sync the level's spatialMap 
+// when using a tile's moveRight/move* methods. That means we
+// cannot rely on level#getAt to fetch components from a level.
+// Instead, use a custom component and manually create a
+// spatial map (see: #createCMap in the game scene).
 const coord = (cx: number, cy: number) => {
   return {
     id: "coord",
