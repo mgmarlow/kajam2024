@@ -1,4 +1,4 @@
-import kaplay, { GameObj, TileComp } from "kaplay";
+import kaplay, { GameObj, TileComp, Vec2 } from "kaplay";
 import "kaplay/global";
 
 kaplay({
@@ -14,6 +14,8 @@ loadSprite("spike", "sprites/spike.png");
 loadSprite("exit", "sprites/portal.png");
 loadSprite("box", "sprites/grass.png");
 
+// Custom component because level/tite don't update
+// their spatial map correctly.
 const coord = (cx: number, cy: number) => {
   return {
     id: "coord",
@@ -75,14 +77,24 @@ scene("menu", () => {
 
   add([text("kajam2024"), pos(center().add(0, -50)), anchor("center")]);
   add([text("press z to start"), pos(center().add(0, 50)), anchor("center")]);
-  add([text("wasd: move, z: undo, r: restart"), pos(center().add(0, 150)), anchor("center")]);
+  add([
+    text("wasd: move, z: undo, r: restart"),
+    pos(center().add(0, 150)),
+    anchor("center"),
+  ]);
 
   onKeyPress("z", () => {
     go("selected", levels[selectedLevel]);
   });
 });
 
+type Action =
+  | { kind: "move"; obj: GameObj; dir: Vec2 }
+  | { kind: "spikefall"; from: Vec2; to: Vec2 }
+  | { kind: "rebirth" };
+
 scene("game", (levelData: string[]) => {
+  const history = [];
   const level = addLevel(levelData, {
     tileWidth: TILE_SIZE,
     tileHeight: TILE_SIZE,
@@ -115,10 +127,55 @@ scene("game", (levelData: string[]) => {
     cmap = createCMap();
   };
 
+  const commitActions = (actions: Action[]) => {
+    actions.forEach((action) => {
+      if (action.kind === "move") {
+        action.obj.cmove(action.dir.x, action.dir.y);
+      } else if (action.kind === "spikefall") {
+        const box = getC(action.from.x, action.from.y);
+        box.destroy();
+        const spike = getC(action.to.x, action.to.y);
+        spike.destroy();
+      } else if (action.kind === "rebirth") {
+        player.unuse("sprite");
+        player.unuse("kat");
+        player.use(sprite("ghost"));
+        player.use("ghost");
+      }
+    });
+
+    updateCMap();
+    history.push(actions);
+  };
+
+  const unwind = () => {
+    if (history.length === 0) {
+      return;
+    }
+
+    const recent: Action[] = history.pop();
+    recent.reverse().forEach((action) => {
+      if (action.kind === "move") {
+        action.obj.cmove(-action.dir.x, -action.dir.y);
+      } else if (action.kind === "spikefall") {
+        level.spawn("b", action.from);
+        level.spawn("x", action.to);
+      } else if (action.kind === "rebirth") {
+        player.unuse("sprite");
+        player.unuse("ghost");
+        player.use(sprite("kat"));
+        player.use("kat");
+      }
+    });
+
+    updateCMap();
+  };
+
   const move = (dirx: number, diry: number) => {
     const destX = player.cx + dirx;
     const destY = player.cy + diry;
     const destTile = getC(destX, destY);
+    const moves: Action[] = [];
 
     if (destTile) {
       if (destTile.is("exit")) {
@@ -135,13 +192,8 @@ scene("game", (levelData: string[]) => {
         return;
       }
 
-      if (destTile.is("spike")) {
-        if (player.is("kat")) {
-          player.unuse("sprite");
-          player.unuse("kat");
-          player.use(sprite("ghost"));
-          player.use("ghost");
-        }
+      if (destTile.is("spike") && player.is("kat")) {
+        moves.push({ kind: "rebirth" });
       }
 
       if (player.is("ghost") && destTile.is("box")) {
@@ -159,18 +211,20 @@ scene("game", (levelData: string[]) => {
           }
 
           if (boxDest.is("spike")) {
-            boxDest.destroy();
-            destTile.destroy();
+            moves.push({
+              kind: "spikefall",
+              from: vec2(destTile.cx, destTile.cy),
+              to: vec2(boxNextX, boxNextY),
+            });
           }
+        } else {
+          moves.push({ kind: "move", obj: destTile, dir: vec2(dirx, diry) });
         }
-
-        destTile.cmove(dirx, diry);
       }
     }
 
-    player.cmove(dirx, diry);
-
-    updateCMap();
+    moves.push({ kind: "move", obj: player, dir: vec2(dirx, diry) });
+    commitActions(moves);
   };
 
   onKeyPress("d", () => {
@@ -190,7 +244,7 @@ scene("game", (levelData: string[]) => {
   });
 
   onKeyPress("z", () => {
-    // TODO
+    unwind();
   });
 
   onKeyPress("r", () => {
