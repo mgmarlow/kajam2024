@@ -174,11 +174,11 @@ scene("game", (levelData: string[]) => {
   const move = (dirx: number, diry: number) => {
     const destX = player.cx + dirx;
     const destY = player.cy + diry;
-    const destTile = getC(destX, destY);
+    const playerDest = getC(destX, destY);
     const moves: Action[] = [];
 
-    if (destTile) {
-      if (destTile.is("exit")) {
+    if (playerDest) {
+      if (playerDest.is("exit")) {
         currentLevel++;
         if (levels[currentLevel]) {
           go("selected", levels[currentLevel]);
@@ -188,21 +188,21 @@ scene("game", (levelData: string[]) => {
         return;
       }
 
-      if (destTile.is("wall")) {
+      if (playerDest.is("wall")) {
         return;
       }
 
-      if (destTile.is("spike") && player.is("kat")) {
+      if (playerDest.is("spike") && player.is("kat")) {
         moves.push({ kind: "rebirth" });
       }
 
-      if (player.is("ghost") && destTile.is("box")) {
+      if (player.is("ghost") && playerDest.is("box")) {
         return;
       }
 
-      if (destTile.is("box")) {
-        const boxNextX = destTile.cx + dirx;
-        const boxNextY = destTile.cy + diry;
+      if (playerDest.is("box")) {
+        const boxNextX = playerDest.cx + dirx;
+        const boxNextY = playerDest.cy + diry;
 
         const boxDest = getC(boxNextX, boxNextY);
         if (boxDest) {
@@ -213,12 +213,12 @@ scene("game", (levelData: string[]) => {
           if (boxDest.is("spike")) {
             moves.push({
               kind: "spikefall",
-              box: vec2(destTile.cx, destTile.cy),
+              box: vec2(playerDest.cx, playerDest.cy),
               spike: vec2(boxNextX, boxNextY),
             });
           }
         } else {
-          moves.push({ kind: "move", obj: destTile, dir: vec2(dirx, diry) });
+          moves.push({ kind: "move", obj: playerDest, dir: vec2(dirx, diry) });
         }
       }
     }
