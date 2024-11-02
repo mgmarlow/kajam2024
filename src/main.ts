@@ -33,29 +33,56 @@ const coord = (cx: number, cy: number) => {
 
 let currentLevel = 0;
 
+interface Level {
+  title: string;
+  data: string[];
+}
+
 // prettier-ignore
 const levels = {
-  0: [
-    ".........",
-    ".  x    .",
-    ".  x   p.",
-    ".  x    .",
-    "........."
-  ],
-  1: [
-    ".........",
-    ".  x b  .",
-    ".  x b p.",
-    ". bx b  .",
-    "........."
-  ]
+  0: {
+    title: "rebirth",
+    data: [
+      ".........",
+      ".  x    .",
+      ".  x   p.",
+      ".  x    .",
+      "........."
+    ],
+  },
+  1: {
+    title: "spike trap",
+    data: [
+      ".........",
+      ".  x b  .",
+      ".  x b p.",
+      ". bx b  .",
+      "........."
+    ]
+  },
 };
 
-scene("menu", () => {
-  add([text("main menu todo"), pos(center()), anchor("center")]);
+scene("selected", (level: Level) => {
+  add([text(level.title), pos(center().add(0, -50)), anchor("center")]);
+  add([text("press z"), pos(center().add(0, 50)), anchor("center")]);
+  onKeyPress("z", () => {
+    go("game", level.data);
+  });
 });
 
-scene("game", (levelData) => {
+scene("menu", () => {
+  let selectedLevel = 0;
+
+  add([text("kajam2024"), pos(center().add(0, -50)), anchor("center")]);
+  add([text("press z to start"), pos(center().add(0, 50)), anchor("center")]);
+  add([text("wasd: move, z: undo, r: restart"), pos(center().add(0, 150)), anchor("center")]);
+
+  onKeyPress("z", () => {
+    go("selected", levels[selectedLevel]);
+  });
+});
+
+scene("game", (levelData: string[]) => {
   const level = addLevel(levelData, {
     tileWidth: TILE_SIZE,
     tileHeight: TILE_SIZE,
@@ -97,7 +124,7 @@ scene("game", (levelData) => {
       if (destTile.is("exit")) {
         currentLevel++;
         if (levels[currentLevel]) {
-          go("game", levels[currentLevel]);
+          go("selected", levels[currentLevel]);
         } else {
           go("win");
         }
@@ -167,7 +194,7 @@ scene("game", (levelData) => {
   });
 
   onKeyPress("r", () => {
-    go("game", levels[currentLevel]);
+    go("game", levels[currentLevel].data);
   });
 });
 
@@ -175,5 +202,4 @@ scene("win", () => {
   add([text("You Win!"), pos(center()), anchor("center")]);
 });
 
-go("game", levels[currentLevel]);
-// go("menu");
+go("menu");
