@@ -14,7 +14,7 @@ loadSprite("spike", "sprites/spike.png");
 loadSprite("exit", "sprites/portal.png");
 loadSprite("box", "sprites/grass.png");
 
-// Level and Tile components don't sync the level's spatialMap 
+// Level and Tile components don't sync the level's spatialMap
 // when using a tile's moveRight/move* methods. That means we
 // cannot rely on level#getAt to fetch components from a level.
 // Instead, use a custom component and manually create a
@@ -44,8 +44,8 @@ interface Level {
 }
 
 // prettier-ignore
-const levels = {
-  0: {
+const levels = [
+  {
     title: "rebirth",
     data: [
       ".........",
@@ -55,7 +55,30 @@ const levels = {
       "........."
     ],
   },
-  1: {
+  // tutorial: player must be ghost to exit
+  {
+    title: "pyramid",
+    data: [
+      ".........",
+      ". b b bx.",
+      ".  b b  .",
+      ".   b  p.",
+      "........."
+    ]
+  },
+  // reinforce: player must be ghost to exit
+  {
+    title: "circle back",
+    data: [
+      ".........",
+      ".  b b  .",
+      ".xxb  bp.",
+      ".      b.",
+      "........."
+    ]
+  },
+  // tutorial: player can spikefall
+  {
     title: "spike trap",
     data: [
       ".........",
@@ -65,7 +88,34 @@ const levels = {
       "........."
     ]
   },
-};
+  {
+    title: "sacrifice",
+    data: [
+      ".........",
+      ".  bx   .",
+      ".   bbbp.",
+      ".  b xb .",
+      "........."
+    ]
+  },
+  {
+    title: "tight spaces",
+    data: [
+      ".........",
+      ".   .  p.",
+      ".   b   .",
+      ".....bbb.",
+      ".xx     .",
+      "........."
+    ]
+  },
+];
+
+// scene("debug", n => {
+//   currentLevel = n;
+//   go("game", levels[currentLevel].data);
+// })
+// go("debug", 5)
 
 scene("selected", (level: Level) => {
   add([text(level.title), pos(center().add(0, -50)), anchor("center")]);
@@ -101,15 +151,19 @@ scene("game", (levelData: string[]) => {
   const level = addLevel(levelData, {
     tileWidth: TILE_SIZE,
     tileHeight: TILE_SIZE,
-    pos: vec2(100, 100),
     tiles: {
-      k: ({ x, y }) => [sprite("kat"), coord(x, y), "kat"],
+      k: ({ x, y }) => [sprite("kat"), coord(x, y), z(100), "kat"],
       ".": ({ x, y }) => [sprite("wall"), coord(x, y), "wall"],
       x: ({ x, y }) => [sprite("spike"), coord(x, y), "spike"],
       p: ({ x, y }) => [sprite("exit"), coord(x, y), "exit"],
       b: ({ x, y }) => [sprite("box"), coord(x, y), "box"],
     },
   });
+
+  // Center that bad boy.
+  level.pos = center();
+  level.pos.x -= level.numColumns() * TILE_SIZE / 2;
+  level.pos.y -= level.numRows() * TILE_SIZE / 2;
 
   const player = level.spawn("k", vec2(1, 1));
 
@@ -209,7 +263,7 @@ scene("game", (levelData: string[]) => {
 
         const boxDest = getC(boxNextX, boxNextY);
         if (boxDest) {
-          if (boxDest.is("wall") || boxDest.is("box")) {
+          if (boxDest.is("wall") || boxDest.is("box") || boxDest.is("exit")) {
             return;
           }
 
