@@ -1,16 +1,18 @@
 import kaplay, { GameObj, TileComp } from "kaplay";
 import "kaplay/global";
 
-const k = kaplay();
+kaplay({
+  background: [74, 48, 82],
+});
 
 const TILE_SIZE = 64;
 
-k.loadSprite("kat", "sprites/kat.png");
-k.loadSprite("ghost", "sprites/ghosty.png");
-k.loadSprite("wall", "sprites/steel.png");
-k.loadSprite("spike", "sprites/spike.png");
-k.loadSprite("exit", "sprites/portal.png");
-k.loadSprite("box", "sprites/grass.png");
+loadSprite("kat", "sprites/kat.png");
+loadSprite("ghost", "sprites/ghosty.png");
+loadSprite("wall", "sprites/steel.png");
+loadSprite("spike", "sprites/spike.png");
+loadSprite("exit", "sprites/portal.png");
+loadSprite("box", "sprites/grass.png");
 
 const coord = (cx: number, cy: number) => {
   return {
@@ -29,29 +31,45 @@ const coord = (cx: number, cy: number) => {
   };
 };
 
-// prettier-ignore
-const level1 = [
-  ".........",
-  ". b  x  .",
-  ".b x x p.",
-  ".  x x  .",
-  "........."
-]
+let currentLevel = 0;
 
-scene("game", () => {
-  const level = k.addLevel(level1, {
+// prettier-ignore
+const levels = {
+  0: [
+    ".........",
+    ".  x    .",
+    ".  x   p.",
+    ".  x    .",
+    "........."
+  ],
+  1: [
+    ".........",
+    ".  x b  .",
+    ".  x b p.",
+    ". bx b  .",
+    "........."
+  ]
+};
+
+scene("menu", () => {
+  add([text("main menu todo"), pos(center()), anchor("center")]);
+});
+
+scene("game", (levelData) => {
+  const level = addLevel(levelData, {
     tileWidth: TILE_SIZE,
     tileHeight: TILE_SIZE,
+    pos: vec2(100, 100),
     tiles: {
-      k: ({ x, y }) => [k.sprite("kat"), coord(x, y), "kat"],
-      ".": ({ x, y }) => [k.sprite("wall"), coord(x, y), "wall"],
-      x: ({ x, y }) => [k.sprite("spike"), coord(x, y), "spike"],
-      p: ({ x, y }) => [k.sprite("exit"), coord(x, y), "exit"],
-      b: ({ x, y }) => [k.sprite("box"), coord(x, y), "box"],
+      k: ({ x, y }) => [sprite("kat"), coord(x, y), "kat"],
+      ".": ({ x, y }) => [sprite("wall"), coord(x, y), "wall"],
+      x: ({ x, y }) => [sprite("spike"), coord(x, y), "spike"],
+      p: ({ x, y }) => [sprite("exit"), coord(x, y), "exit"],
+      b: ({ x, y }) => [sprite("box"), coord(x, y), "box"],
     },
   });
 
-  const player = level.spawn("k", k.vec2(1, 1));
+  const player = level.spawn("k", vec2(1, 1));
 
   const serialize = (x: number, y: number) => x + y * level.numColumns();
 
@@ -76,18 +94,21 @@ scene("game", () => {
     const destTile = getC(destX, destY);
 
     if (destTile) {
-      // Only one obj per tile supported.
-      const content = destTile;
-
-      if (content.is("exit")) {
-        console.log("win!");
-      }
-
-      if (content.is("wall")) {
+      if (destTile.is("exit")) {
+        currentLevel++;
+        if (levels[currentLevel]) {
+          go("game", levels[currentLevel]);
+        } else {
+          go("win");
+        }
         return;
       }
 
-      if (content.is("spike")) {
+      if (destTile.is("wall")) {
+        return;
+      }
+
+      if (destTile.is("spike")) {
         if (player.is("kat")) {
           player.unuse("sprite");
           player.unuse("kat");
@@ -96,13 +117,13 @@ scene("game", () => {
         }
       }
 
-      if (player.is("ghost") && content.is("box")) {
+      if (player.is("ghost") && destTile.is("box")) {
         return;
       }
 
-      if (content.is("box")) {
-        const boxNextX = content.cx + dirx;
-        const boxNextY = content.cy + diry;
+      if (destTile.is("box")) {
+        const boxNextX = destTile.cx + dirx;
+        const boxNextY = destTile.cy + diry;
 
         const boxDest = getC(boxNextX, boxNextY);
         if (boxDest) {
@@ -112,11 +133,11 @@ scene("game", () => {
 
           if (boxDest.is("spike")) {
             boxDest.destroy();
-            content.destroy();
+            destTile.destroy();
           }
         }
 
-        content.cmove(dirx, diry);
+        destTile.cmove(dirx, diry);
       }
     }
 
@@ -125,21 +146,34 @@ scene("game", () => {
     updateCMap();
   };
 
-  k.onKeyPress("d", () => {
+  onKeyPress("d", () => {
     move(1, 0);
   });
 
-  k.onKeyPress("a", () => {
+  onKeyPress("a", () => {
     move(-1, 0);
   });
 
-  k.onKeyPress("w", () => {
+  onKeyPress("w", () => {
     move(0, -1);
   });
 
-  k.onKeyPress("s", () => {
+  onKeyPress("s", () => {
     move(0, 1);
+  });
+
+  onKeyPress("z", () => {
+    // TODO
+  });
+
+  onKeyPress("r", () => {
+    go("game", levels[currentLevel]);
   });
 });
 
-k.go("game");
+scene("win", () => {
+  add([text("You Win!"), pos(center()), anchor("center")]);
+});
+
+go("game", levels[currentLevel]);
+// go("menu");
