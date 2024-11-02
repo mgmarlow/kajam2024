@@ -90,7 +90,7 @@ scene("menu", () => {
 
 type Action =
   | { kind: "move"; obj: GameObj; dir: Vec2 }
-  | { kind: "spikefall"; from: Vec2; to: Vec2 }
+  | { kind: "spikefall"; box: Vec2; spike: Vec2 }
   | { kind: "rebirth" };
 
 scene("game", (levelData: string[]) => {
@@ -132,9 +132,9 @@ scene("game", (levelData: string[]) => {
       if (action.kind === "move") {
         action.obj.cmove(action.dir.x, action.dir.y);
       } else if (action.kind === "spikefall") {
-        const box = getC(action.from.x, action.from.y);
+        const box = getC(action.box.x, action.box.y);
         box.destroy();
-        const spike = getC(action.to.x, action.to.y);
+        const spike = getC(action.spike.x, action.spike.y);
         spike.destroy();
       } else if (action.kind === "rebirth") {
         player.unuse("sprite");
@@ -158,8 +158,8 @@ scene("game", (levelData: string[]) => {
       if (action.kind === "move") {
         action.obj.cmove(-action.dir.x, -action.dir.y);
       } else if (action.kind === "spikefall") {
-        level.spawn("b", action.from);
-        level.spawn("x", action.to);
+        level.spawn("b", action.box);
+        level.spawn("x", action.spike);
       } else if (action.kind === "rebirth") {
         player.unuse("sprite");
         player.unuse("ghost");
@@ -213,8 +213,8 @@ scene("game", (levelData: string[]) => {
           if (boxDest.is("spike")) {
             moves.push({
               kind: "spikefall",
-              from: vec2(destTile.cx, destTile.cy),
-              to: vec2(boxNextX, boxNextY),
+              box: vec2(destTile.cx, destTile.cy),
+              spike: vec2(boxNextX, boxNextY),
             });
           }
         } else {
