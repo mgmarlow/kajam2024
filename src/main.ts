@@ -255,30 +255,28 @@ scene("game", (levelData: string[]) => {
 
     // Pulling blocks when a ghost.
     if (player.is("ghost")) {
-      const opPlayerMoveTo = player.cvec.sub(dir);
-      const opPlayerMoveToObj: GameObj | undefined = findFirst(opPlayerMoveTo);
+      const playerMoveAway = player.cvec.sub(dir);
+      const playerMoveAwayObj: GameObj | undefined = findFirst(playerMoveAway);
       // Player and spike would occupy a single tile spot.
       const playerTiles = find(player.cvec);
 
       if (
-        opPlayerMoveToObj?.is("box") &&
+        playerMoveAwayObj?.is("box") &&
         playerTiles.find((tile) => tile.is("spike"))
       ) {
         moves.push({
           kind: "spikefall",
-          box: opPlayerMoveTo,
+          box: playerMoveAway,
           spike: player.cvec,
         });
-      }
-
-      if (
+      } else if (
         (!playerMoveToObj || playerMoveToObj.is("spike")) &&
-        opPlayerMoveToObj?.is("box")
+        playerMoveAwayObj?.is("box")
       ) {
         moves.push({
           kind: "move",
           tag: "box",
-          from: opPlayerMoveTo,
+          from: playerMoveAway,
           dir,
         });
       }
