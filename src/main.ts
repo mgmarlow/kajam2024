@@ -319,7 +319,11 @@ scene("game", (levelData: string[]) => {
 });
 
 scene("win", () => {
-  add([text("You Win!"), pos(center()), anchor("center")]);
+  add([
+    text("Great job! All levels completed."),
+    pos(center()),
+    anchor("center"),
+  ]);
 });
 
 go("menu");
