@@ -29,9 +29,9 @@ const coord = (cx: number, cy: number) => {
       this.pos.x = this.cx * TILE_SIZE;
       this.pos.y = this.cy * TILE_SIZE;
     },
-    cmove(nextx: number, nexty: number) {
-      this.cx += nextx;
-      this.cy += nexty;
+    cmove(dir: Vec2) {
+      this.cx += dir.x;
+      this.cy += dir.y;
     },
   };
 };
@@ -108,14 +108,14 @@ const levels = [
       ".xx     .",
       "........."
     ]
-  },
+  }
 ];
 
-// scene("debug", n => {
+// scene("debug", (n) => {
 //   currentLevel = n;
 //   go("game", levels[currentLevel].data);
-// })
-// go("debug", 5)
+// });
+// go("debug", 5);
 
 scene("selected", (level: Level) => {
   add([text(level.title), pos(center().add(0, -50)), anchor("center")]);
@@ -142,7 +142,7 @@ scene("menu", () => {
 });
 
 type Action =
-  | { kind: "move"; obj: GameObj; dir: Vec2 }
+  | { kind: "move"; from: Vec2; dir: Vec2 }
   | { kind: "spikefall"; box: Vec2; spike: Vec2 }
   | { kind: "rebirth" };
 
@@ -162,8 +162,8 @@ scene("game", (levelData: string[]) => {
 
   // Center that bad boy.
   level.pos = center();
-  level.pos.x -= level.numColumns() * TILE_SIZE / 2;
-  level.pos.y -= level.numRows() * TILE_SIZE / 2;
+  level.pos.x -= (level.numColumns() * TILE_SIZE) / 2;
+  level.pos.y -= (level.numRows() * TILE_SIZE) / 2;
 
   const player = level.spawn("k", vec2(1, 1));
 
@@ -176,8 +176,7 @@ scene("game", (levelData: string[]) => {
     }, []);
   };
 
-  const getC = (x: number, y: number): GameObj | undefined =>
-    cmap[serialize(x, y)];
+  const getC = (v: Vec2): GameObj | undefined => cmap[serialize(v.x, v.y)];
 
   let cmap = createCMap();
   const updateCMap = () => {
@@ -187,11 +186,13 @@ scene("game", (levelData: string[]) => {
   const commitActions = (actions: Action[]) => {
     actions.forEach((action) => {
       if (action.kind === "move") {
-        action.obj.cmove(action.dir.x, action.dir.y);
+        // action.obj.cmove(action.dir);
+        const obj = getC(action.from);
+        obj.cmove(action.dir);
       } else if (action.kind === "spikefall") {
-        const box = getC(action.box.x, action.box.y);
+        const box = getC(action.box);
         box.destroy();
-        const spike = getC(action.spike.x, action.spike.y);
+        const spike = getC(action.spike);
         spike.destroy();
       } else if (action.kind === "rebirth") {
         player.unuse("sprite");
@@ -213,7 +214,9 @@ scene("game", (levelData: string[]) => {
     const recent: Action[] = history.pop();
     recent.reverse().forEach((action) => {
       if (action.kind === "move") {
-        action.obj.cmove(-action.dir.x, -action.dir.y);
+        // action.obj.cmove(-action.dir.x, -action.dir.y);
+        const obj = getC(action.from.add(action.dir));
+        obj.cmove(vec2(-action.dir.x, -action.dir.y));
       } else if (action.kind === "spikefall") {
         level.spawn("b", action.box);
         level.spawn("x", action.spike);
@@ -229,9 +232,8 @@ scene("game", (levelData: string[]) => {
   };
 
   const move = (dirx: number, diry: number) => {
-    const destX = player.cx + dirx;
-    const destY = player.cy + diry;
-    const playerDest = getC(destX, destY);
+    const playerDestCoord = vec2(player.cx + dirx, player.cy + diry);
+    const playerDest: GameObj | undefined = getC(playerDestCoord);
     const moves: Action[] = [];
 
     if (playerDest) {
@@ -258,10 +260,9 @@ scene("game", (levelData: string[]) => {
       }
 
       if (playerDest.is("box")) {
-        const boxNextX = playerDest.cx + dirx;
-        const boxNextY = playerDest.cy + diry;
+        const boxDestCoord = vec2(playerDest.cx + dirx, playerDest.cy + diry);
+        const boxDest = getC(boxDestCoord);
 
-        const boxDest = getC(boxNextX, boxNextY);
         if (boxDest) {
           if (boxDest.is("wall") || boxDest.is("box") || boxDest.is("exit")) {
             return;
@@ -270,17 +271,25 @@ scene("game", (levelData: string[]) => {
           if (boxDest.is("spike")) {
             moves.push({
               kind: "spikefall",
-              box: vec2(playerDest.cx, playerDest.cy),
-              spike: vec2(boxNextX, boxNextY),
+              box: playerDestCoord,
+              spike: boxDestCoord,
             });
           }
         } else {
-          moves.push({ kind: "move", obj: playerDest, dir: vec2(dirx, diry) });
+          moves.push({
+            kind: "move",
+            from: playerDestCoord,
+            dir: vec2(dirx, diry),
+          });
         }
       }
     }
 
-    moves.push({ kind: "move", obj: player, dir: vec2(dirx, diry) });
+    moves.push({
+      kind: "move",
+      from: vec2(player.cx, player.cy),
+      dir: vec2(dirx, diry),
+    });
     commitActions(moves);
   };
 
