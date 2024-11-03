@@ -129,8 +129,8 @@ const levels = [
 
 scene("selected", (level: Level) => {
   add([text(level.title), pos(center().add(0, -50)), anchor("center")]);
-  add([text("press z"), pos(center().add(0, 50)), anchor("center")]);
-  onKeyPress("z", () => {
+  add([text("press x"), pos(center().add(0, 50)), anchor("center")]);
+  onKeyPress("x", () => {
     go("game", level.data);
   });
 });
@@ -138,15 +138,14 @@ scene("selected", (level: Level) => {
 scene("menu", () => {
   let selectedLevel = 0;
 
-  add([text("kajam2024"), pos(center().add(0, -50)), anchor("center")]);
-  add([text("press z to start"), pos(center().add(0, 50)), anchor("center")]);
-  add([
-    text("wasd: move, z: undo, r: restart"),
-    pos(center().add(0, 150)),
-    anchor("center"),
-  ]);
+  add([text("kajam2024"), pos(center().add(0, -150)), anchor("center")]);
+  add([text("press x to start"), pos(center().add(0, -100)), anchor("center")]);
 
-  onKeyPress("z", () => {
+  add([text("arrows/wasd: move"), pos(center()), anchor("center")]);
+  add([text("z: undo"), pos(center().add(0, 50)), anchor("center")]);
+  add([text("r: restart"), pos(center().add(0, 100)), anchor("center")]);
+
+  onKeyPress("x", () => {
     go("selected", levels[selectedLevel]);
   });
 });
