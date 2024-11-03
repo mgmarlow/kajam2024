@@ -233,7 +233,7 @@ scene("game", (levelData: string[]) => {
     recent.reverse().forEach((action) => {
       if (action.kind === "move") {
         const obj = findFirst(action.from.add(action.dir), action.tag);
-        obj.cmove(vec2(-action.dir.x, -action.dir.y));
+        obj.cmove(vec2(0, 0).sub(action.dir));
       } else if (action.kind === "spikefall") {
         level.spawn("b", action.box);
         level.spawn("x", action.spike);
@@ -342,7 +342,7 @@ scene("game", (levelData: string[]) => {
     moves.push({
       kind: "move",
       tag: "player",
-      from: player.cvec,
+      from: player.cvec.clone(),
       dir,
     });
     commitActions(moves);
