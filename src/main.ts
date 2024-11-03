@@ -293,19 +293,19 @@ scene("game", (levelData: string[]) => {
     commitActions(moves);
   };
 
-  onKeyPress("d", () => {
+  onKeyPress(["d", "right"], () => {
     move(1, 0);
   });
 
-  onKeyPress("a", () => {
+  onKeyPress(["a", "left"], () => {
     move(-1, 0);
   });
 
-  onKeyPress("w", () => {
+  onKeyPress(["w", "up"], () => {
     move(0, -1);
   });
 
-  onKeyPress("s", () => {
+  onKeyPress(["s", "down"], () => {
     move(0, 1);
   });
 
