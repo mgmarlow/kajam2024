@@ -23,15 +23,14 @@ const coord = (cx: number, cy: number) => {
   return {
     id: "coord",
     requires: ["pos"],
-    cx,
-    cy,
+    cvec: vec2(cx, cy),
     update() {
-      this.pos.x = this.cx * TILE_SIZE;
-      this.pos.y = this.cy * TILE_SIZE;
+      this.pos.x = this.cvec.x * TILE_SIZE;
+      this.pos.y = this.cvec.y * TILE_SIZE;
     },
     cmove(dir: Vec2) {
-      this.cx += dir.x;
-      this.cy += dir.y;
+      this.cvec.x += dir.x;
+      this.cvec.y += dir.y;
     },
   };
 };
@@ -108,14 +107,26 @@ const levels = [
       ".xx     .",
       "........."
     ]
-  }
+  }, 
+  {
+    title: "llama",
+    data: [
+      "........",
+      ".  .. ..",
+      ".  .. p.",
+      ".  xb ..",
+      ". bxb ..",
+      ". bxb ..",
+      "........"
+    ]
+  },
 ];
 
 // scene("debug", (n) => {
 //   currentLevel = n;
 //   go("game", levels[currentLevel].data);
 // });
-// go("debug", 5);
+// go("debug", 0);
 
 scene("selected", (level: Level) => {
   add([text(level.title), pos(center().add(0, -50)), anchor("center")]);
@@ -142,7 +153,7 @@ scene("menu", () => {
 });
 
 type Action =
-  | { kind: "move"; from: Vec2; dir: Vec2 }
+  | { kind: "move"; from: Vec2; dir: Vec2; tag: string }
   | { kind: "spikefall"; box: Vec2; spike: Vec2 }
   | { kind: "rebirth" };
 
@@ -152,7 +163,7 @@ scene("game", (levelData: string[]) => {
     tileWidth: TILE_SIZE,
     tileHeight: TILE_SIZE,
     tiles: {
-      k: ({ x, y }) => [sprite("kat"), coord(x, y), z(100), "kat"],
+      k: ({ x, y }) => [sprite("kat"), coord(x, y), z(100), "kat", "player"],
       ".": ({ x, y }) => [sprite("wall"), coord(x, y), "wall"],
       x: ({ x, y }) => [sprite("spike"), coord(x, y), "spike"],
       p: ({ x, y }) => [sprite("exit"), coord(x, y), "exit"],
@@ -167,16 +178,24 @@ scene("game", (levelData: string[]) => {
 
   const player = level.spawn("k", vec2(1, 1));
 
-  const serialize = (x: number, y: number) => x + y * level.numColumns();
+  const serialize = (v: Vec2) => v.x + v.y * level.numColumns();
 
   const createCMap = () => {
     return level.get("coord").reduce((acc, cur) => {
-      acc[serialize(cur.cx, cur.cy)] = cur;
+      acc[serialize(cur.cvec)] ||= [];
+      acc[serialize(cur.cvec)].push(cur);
       return acc;
     }, []);
   };
 
-  const getC = (v: Vec2): GameObj | undefined => cmap[serialize(v.x, v.y)];
+  const find = (v: Vec2): GameObj[] => cmap[serialize(v)] || [];
+
+  // There are only a few cases where we care that
+  // there are multiple objs in a tile, e.g. player + spike.
+  const findFirst = (v: Vec2, tag: string = undefined): GameObj | undefined => {
+    const tiles = find(v);
+    return tag ? tiles.find((t) => t.is(tag)) : tiles[0];
+  };
 
   let cmap = createCMap();
   const updateCMap = () => {
@@ -186,13 +205,12 @@ scene("game", (levelData: string[]) => {
   const commitActions = (actions: Action[]) => {
     actions.forEach((action) => {
       if (action.kind === "move") {
-        // action.obj.cmove(action.dir);
-        const obj = getC(action.from);
+        const obj = findFirst(action.from, action.tag);
         obj.cmove(action.dir);
       } else if (action.kind === "spikefall") {
-        const box = getC(action.box);
+        const box = findFirst(action.box, "box");
         box.destroy();
-        const spike = getC(action.spike);
+        const spike = findFirst(action.spike, "spike");
         spike.destroy();
       } else if (action.kind === "rebirth") {
         player.unuse("sprite");
@@ -214,8 +232,7 @@ scene("game", (levelData: string[]) => {
     const recent: Action[] = history.pop();
     recent.reverse().forEach((action) => {
       if (action.kind === "move") {
-        // action.obj.cmove(-action.dir.x, -action.dir.y);
-        const obj = getC(action.from.add(action.dir));
+        const obj = findFirst(action.from.add(action.dir), action.tag);
         obj.cmove(vec2(-action.dir.x, -action.dir.y));
       } else if (action.kind === "spikefall") {
         level.spawn("b", action.box);
@@ -231,13 +248,45 @@ scene("game", (levelData: string[]) => {
     updateCMap();
   };
 
-  const move = (dirx: number, diry: number) => {
-    const playerDestCoord = vec2(player.cx + dirx, player.cy + diry);
-    const playerDest: GameObj | undefined = getC(playerDestCoord);
+  const move = (dir: Vec2) => {
+    const playerMoveTo = player.cvec.add(dir);
+    const playerMoveToObj: GameObj | undefined = findFirst(playerMoveTo);
     const moves: Action[] = [];
 
-    if (playerDest) {
-      if (playerDest.is("exit") && player.is("ghost")) {
+    // Pulling blocks when a ghost.
+    if (player.is("ghost")) {
+      const opPlayerMoveTo = player.cvec.sub(dir);
+      const opPlayerMoveToObj: GameObj | undefined = findFirst(opPlayerMoveTo);
+      // Player and spike would occupy a single tile spot.
+      const playerTiles = find(player.cvec);
+
+      if (
+        opPlayerMoveToObj?.is("box") &&
+        playerTiles.find((tile) => tile.is("spike"))
+      ) {
+        moves.push({
+          kind: "spikefall",
+          box: opPlayerMoveTo,
+          spike: player.cvec,
+        });
+      }
+
+      if (
+        (!playerMoveToObj || playerMoveToObj.is("spike")) &&
+        opPlayerMoveToObj?.is("box")
+      ) {
+        moves.push({
+          kind: "move",
+          tag: "box",
+          from: opPlayerMoveTo,
+          dir,
+        });
+      }
+    }
+
+    // Pushing blocks when a kat.
+    if (playerMoveToObj) {
+      if (playerMoveToObj.is("exit") && player.is("ghost")) {
         currentLevel++;
         if (levels[currentLevel]) {
           go("selected", levels[currentLevel]);
@@ -247,39 +296,44 @@ scene("game", (levelData: string[]) => {
         return;
       }
 
-      if (playerDest.is("wall")) {
+      if (playerMoveToObj.is("wall")) {
         return;
       }
 
-      if (playerDest.is("spike") && player.is("kat")) {
+      if (playerMoveToObj.is("spike") && player.is("kat")) {
         moves.push({ kind: "rebirth" });
       }
 
-      if (player.is("ghost") && playerDest.is("box")) {
+      if (player.is("ghost") && playerMoveToObj.is("box")) {
         return;
       }
 
-      if (playerDest.is("box")) {
-        const boxDestCoord = vec2(playerDest.cx + dirx, playerDest.cy + diry);
-        const boxDest = getC(boxDestCoord);
+      if (playerMoveToObj.is("box")) {
+        const boxMoveTo = playerMoveTo.add(dir);
+        const boxMoveToObj: GameObj | undefined = findFirst(boxMoveTo);
 
-        if (boxDest) {
-          if (boxDest.is("wall") || boxDest.is("box") || boxDest.is("exit")) {
+        if (boxMoveToObj) {
+          if (
+            boxMoveToObj.is("wall") ||
+            boxMoveToObj.is("box") ||
+            boxMoveToObj.is("exit")
+          ) {
             return;
           }
 
-          if (boxDest.is("spike")) {
+          if (boxMoveToObj.is("spike")) {
             moves.push({
               kind: "spikefall",
-              box: playerDestCoord,
-              spike: boxDestCoord,
+              box: playerMoveTo,
+              spike: boxMoveTo,
             });
           }
         } else {
           moves.push({
             kind: "move",
-            from: playerDestCoord,
-            dir: vec2(dirx, diry),
+            tag: "box",
+            from: playerMoveTo,
+            dir,
           });
         }
       }
@@ -287,26 +341,27 @@ scene("game", (levelData: string[]) => {
 
     moves.push({
       kind: "move",
-      from: vec2(player.cx, player.cy),
-      dir: vec2(dirx, diry),
+      tag: "player",
+      from: player.cvec,
+      dir,
     });
     commitActions(moves);
   };
 
   onKeyPress(["d", "right"], () => {
-    move(1, 0);
+    move(vec2(1, 0));
   });
 
   onKeyPress(["a", "left"], () => {
-    move(-1, 0);
+    move(vec2(-1, 0));
   });
 
   onKeyPress(["w", "up"], () => {
-    move(0, -1);
+    move(vec2(0, -1));
   });
 
   onKeyPress(["s", "down"], () => {
-    move(0, 1);
+    move(vec2(0, 1));
   });
 
   onKeyPress("z", () => {
