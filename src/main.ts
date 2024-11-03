@@ -44,6 +44,7 @@ interface Level {
 
 // prettier-ignore
 const levels = [
+  // tutorial: spikes = ghost
   {
     title: "rebirth",
     data: [
@@ -56,68 +57,66 @@ const levels = [
   },
   // tutorial: player must be ghost to exit
   {
-    title: "pyramid",
+    title: "double take",
     data: [
       ".........",
-      ". b b bx.",
+      ".     .x.",
+      ".     . .",
+      ".      p.",
+      "........."
+    ]
+  },
+  // tutorial: can't push blocks as ghost
+  {
+    title: "easy peasy",
+    data: [
+      ".........",
+      ".  . b  .",
+      ". x  . p.",
+      ".    .  .",
+      "........."
+    ]
+  },
+  // tutorial: can pull block as ghost
+  {
+    title: "shrinkage",
+    data: [
+      ".........",
+      ".  .  b .",
+      ". x   .p.",
+      ".     . .",
+      "........."
+    ]
+  },
+  // Mainline levels
+  {
+    title: "two columns",
+    data: [
+      ".........",
       ".  b b  .",
-      ".   b  p.",
+      ".  b b  .",
+      ".x b b p.",
       "........."
     ]
   },
-  // reinforce: player must be ghost to exit
   {
-    title: "circle back",
+    title: "serpentine",
     data: [
       ".........",
       ".  b b  .",
-      ".xxb  bp.",
-      ".      b.",
-      "........."
-    ]
-  },
-  // tutorial: player can spikefall
-  {
-    title: "spike trap",
-    data: [
-      ".........",
-      ".  x b  .",
-      ".  x b p.",
-      ". bx b  .",
+      ".b bxb  .",
+      ".b   b p.",
       "........."
     ]
   },
   {
-    title: "sacrifice",
+    title: "fill in the gaps",
     data: [
       ".........",
-      ".  bx   .",
-      ".   bbbp.",
-      ".  b xb .",
+      ".  bx.  .",
+      ".  b   p.",
+      ".  .  . .",
       "........."
-    ]
-  },
-  {
-    title: "tight spaces",
-    data: [
-      ".........",
-      ".   .  p.",
-      ".   b   .",
-      ".....bbb.",
-      ".xx     .",
-      "........."
-    ]
-  }, 
-  {
-    title: "llama",
-    data: [
-      "........",
-      ".  .. ..",
-      ".  .. p.",
-      ".  xb ..",
-      ". bxb ..",
-      ". bxb ..",
-      "........"
     ]
   },
 ];
@@ -126,7 +125,7 @@ const levels = [
 //   currentLevel = n;
 //   go("game", levels[currentLevel].data);
 // });
-// go("debug", 0);
+// go("debug", 6);
 
 scene("selected", (level: Level) => {
   add([text(level.title), pos(center().add(0, -50)), anchor("center")]);
