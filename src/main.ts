@@ -49,9 +49,9 @@ const levels = [
     title: "rebirth",
     data: [
       ".........",
-      ".  x    .",
-      ".  x   p.",
-      ".  x    .",
+      ".   x   .",
+      ".   x  p.",
+      ".   x   .",
       "........."
     ],
   },
@@ -60,42 +60,29 @@ const levels = [
     title: "double take",
     data: [
       ".........",
-      ".     .x.",
-      ".     . .",
-      ".      p.",
+      ".    p.x.",
+      ".       .",
+      ".       .",
       "........."
     ]
   },
-  // tutorial: can't push blocks as ghost
   {
-    title: "easy peasy",
+    title: "pushy kat",
     data: [
       ".........",
-      ".  . b  .",
-      ". x  . p.",
-      ".    .  .",
+      ".  pbx  .",
+      ".    bb..",
+      ".       .",
       "........."
     ]
   },
-  // tutorial: can pull block as ghost
   {
-    title: "shrinkage",
+    title: "diagonal boxes",
     data: [
       ".........",
-      ".  .  b .",
-      ". x   .p.",
-      ".     . .",
-      "........."
-    ]
-  },
-  // Mainline levels
-  {
-    title: "two columns",
-    data: [
-      ".........",
-      ".  b b  .",
-      ".  b b  .",
-      ".x b b p.",
+      ".  x b  .",
+      ".  . . p.",
+      ".  b .  .",
       "........."
     ]
   },
@@ -110,7 +97,7 @@ const levels = [
     ]
   },
   {
-    title: "fill in the gaps",
+    title: "longitudinal",
     data: [
       ".........",
       ".  bx.  .",
@@ -125,7 +112,7 @@ const levels = [
 //   currentLevel = n;
 //   go("game", levels[currentLevel].data);
 // });
-// go("debug", 6);
+// go("debug", 5);
 
 scene("selected", (level: Level) => {
   add([text(level.title), pos(center().add(0, -50)), anchor("center")]);
@@ -138,7 +125,7 @@ scene("selected", (level: Level) => {
 scene("menu", () => {
   let selectedLevel = 0;
 
-  add([text("kajam2024"), pos(center().add(0, -150)), anchor("center")]);
+  add([text("kat's ghost"), pos(center().add(0, -150)), anchor("center")]);
   add([text("press x to start"), pos(center().add(0, -100)), anchor("center")]);
 
   add([text("arrows/wasd: move"), pos(center()), anchor("center")]);
@@ -152,7 +139,6 @@ scene("menu", () => {
 
 type Action =
   | { kind: "move"; from: Vec2; dir: Vec2; tag: string }
-  | { kind: "spikefall"; box: Vec2; spike: Vec2 }
   | { kind: "rebirth" };
 
 scene("game", (levelData: string[]) => {
@@ -205,11 +191,6 @@ scene("game", (levelData: string[]) => {
       if (action.kind === "move") {
         const obj = findFirst(action.from, action.tag);
         obj.cmove(action.dir);
-      } else if (action.kind === "spikefall") {
-        const box = findFirst(action.box, "box");
-        box.destroy();
-        const spike = findFirst(action.spike, "spike");
-        spike.destroy();
       } else if (action.kind === "rebirth") {
         player.unuse("sprite");
         player.unuse("kat");
@@ -232,9 +213,6 @@ scene("game", (levelData: string[]) => {
       if (action.kind === "move") {
         const obj = findFirst(action.from.add(action.dir), action.tag);
         obj.cmove(vec2(0, 0).sub(action.dir));
-      } else if (action.kind === "spikefall") {
-        level.spawn("b", action.box);
-        level.spawn("x", action.spike);
       } else if (action.kind === "rebirth") {
         player.unuse("sprite");
         player.unuse("ghost");
@@ -262,11 +240,7 @@ scene("game", (levelData: string[]) => {
         playerMoveAwayObj?.is("box") &&
         playerTiles.find((tile) => tile.is("spike"))
       ) {
-        moves.push({
-          kind: "spikefall",
-          box: playerMoveAway,
-          spike: player.cvec,
-        });
+          // ignore
       } else if (
         (!playerMoveToObj || playerMoveToObj.is("spike")) &&
         playerMoveAwayObj?.is("box")
@@ -318,11 +292,7 @@ scene("game", (levelData: string[]) => {
           }
 
           if (boxMoveToObj.is("spike")) {
-            moves.push({
-              kind: "spikefall",
-              box: playerMoveTo,
-              spike: boxMoveTo,
-            });
+            return;
           }
         } else {
           moves.push({
