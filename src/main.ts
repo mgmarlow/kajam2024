@@ -55,17 +55,7 @@ const levels = [
       "........."
     ],
   },
-  // tutorial: player must be ghost to exit
-  {
-    title: "double take",
-    data: [
-      ".........",
-      ".    p.x.",
-      ".       .",
-      ".       .",
-      "........."
-    ]
-  },
+  // TODO: more intro puzzles with pushing
   {
     title: "pushy kat",
     data: [
@@ -77,22 +67,12 @@ const levels = [
     ]
   },
   {
-    title: "diagonal boxes",
-    data: [
-      ".........",
-      ".  x b  .",
-      ".  . . p.",
-      ".  b .  .",
-      "........."
-    ]
-  },
-  {
     title: "serpentine",
     data: [
       ".........",
       ".  b b  .",
-      ".b bxb  .",
-      ".b   b p.",
+      ".. bxb  .",
+      "..   b p.",
       "........."
     ]
   },
@@ -106,13 +86,49 @@ const levels = [
       "........."
     ]
   },
+  // Pulling around a circle is neat.
+  {
+    title: "ring around the rosie",
+    data: [
+      ".........",
+      ".  x b  .",
+      ".  . . p.",
+      ".  b .  .",
+      "........."
+    ]
+  },
+  {
+    title: "pocket full of posies",
+    data: [
+      ".........",
+      ". x x bp.",
+      ". .b  ...",
+      ".   .b.  ",
+      ". x x .  ",
+      ".......  "
+    ]
+  },
+
+  // TODO:
+  // {
+  //   title: "chimney",
+  //   data: [
+  //     ".......",
+  //     ".p.....",
+  //     ".b    .",
+  //     ". ...b.",
+  //     ". x b .",
+  //     "..    .",
+  //     "......."
+  //   ]
+  // },
 ];
 
 // scene("debug", (n) => {
 //   currentLevel = n;
 //   go("game", levels[currentLevel].data);
 // });
-// go("debug", 5);
+// go("debug", 7);
 
 scene("selected", (level: Level) => {
   add([text(level.title), pos(center().add(0, -50)), anchor("center")]);
