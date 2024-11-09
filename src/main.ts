@@ -116,6 +116,9 @@ scene("game", (levelData: string[]) => {
   const updateCMap = () => {
     cmap = createCMap();
 
+    // TODO: technically need to check this before move since you can
+    // theoretically simultaneously pull a block onto a lightning bolt
+    // and move on to the portal. No levels use this though.
     // Not exactly the best place to put this, but hey, what can you do.
     const nextPortalsActive = cmap
       .filter((cmps) => cmps.find((cmp: GameObj) => cmp.is("lightning")))
@@ -298,6 +301,6 @@ scene("win", () => {
 //   currentLevel = n;
 //   go("game", levels[currentLevel].data);
 // });
-// go("debug");
+// go("debug", 4);
 
 go("menu");

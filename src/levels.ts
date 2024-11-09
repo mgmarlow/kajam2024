@@ -22,6 +22,16 @@ export const levels = [
     ]
   },
   {
+    title: "spike or spike",
+    data: [
+      ".........",
+      ".  x b  .",
+      ".  . . p.",
+      ".  x b  .",
+      "........."
+    ]
+  },
+  {
     title: "ring around the rosie",
     data: [
       ".........",
@@ -31,6 +41,7 @@ export const levels = [
       "........."
     ]
   },
+  // TODO: here maybe, more blocks cant be pulled over spikes
   {
     title: "longitudinal",
     data: [
@@ -80,6 +91,38 @@ export const levels = [
       ". b .  m.",
       ". b m   .",
       ".p     x.",
+      "........."
+    ],
+  },
+  {
+    title: "orthogonality",
+    data: [
+      ".........",
+      ". m  x  .",
+      ". m bbb .",
+      ".pm     .",
+      "........."
+    ],
+  },
+  {
+    title: "stuck in the middle",
+    data: [
+      ".........",
+      ".  b x  .",
+      ".  bmmb .",
+      ".p .    .",
+      "........."
+    ],
+  },
+  {
+    title: "mousetrap",
+    data: [
+      ".........",
+      ".  m   p.",
+      "..b... ..",
+      ".  mx   .",
+      ".  ...  .",
+      ".   b   .",
       "........."
     ],
   },
