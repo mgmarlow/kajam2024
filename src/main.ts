@@ -295,6 +295,12 @@ scene("win", () => {
     pos(center()),
     anchor("center"),
   ]);
+
+  add([
+    text("Thanks for playing."),
+    pos(center().add(vec2(0, 100))),
+    anchor("center"),
+  ]);
 });
 
 // scene("debug", (n = levels.length - 1) => {
