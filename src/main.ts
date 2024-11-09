@@ -83,7 +83,7 @@ scene("game", (levelData: string[]) => {
       ".": ({ x, y }) => [sprite("wall"), coord(x, y), "wall"],
       x: ({ x, y }) => [sprite("spike"), coord(x, y), "spike"],
       p: ({ x, y }) => [sprite("portalInactive"), coord(x, y), "exit"],
-      b: ({ x, y }) => [sprite("box"), coord(x, y), "box"],
+      b: ({ x, y }) => [sprite("box"), coord(x, y), z(50), "box"],
       m: ({ x, y }) => [sprite("lightning"), coord(x, y), "lightning"],
     },
   });
@@ -112,10 +112,11 @@ scene("game", (levelData: string[]) => {
       return typeof tag === "string" ? cmp.is(tag) : tag.some((t) => cmp.is(t));
     }) !== -1;
 
-  let cmap = createCMap();
+  let cmap: GameObj[][];
   const updateCMap = () => {
     cmap = createCMap();
 
+    // Not exactly the best place to put this, but hey, what can you do.
     const nextPortalsActive = cmap
       .filter((cmps) => cmps.find((cmp: GameObj) => cmp.is("lightning")))
       .every((cmps) => {
@@ -132,6 +133,8 @@ scene("game", (levelData: string[]) => {
 
     portalsActive = nextPortalsActive;
   };
+  // Run it once for good measure.
+  updateCMap();
 
   const commitActions = (actions: Action[]) => {
     actions.forEach((action) => {
@@ -291,10 +294,10 @@ scene("win", () => {
   ]);
 });
 
-// scene("debug", (n) => {
+// scene("debug", (n = levels.length - 1) => {
 //   currentLevel = n;
 //   go("game", levels[currentLevel].data);
 // });
-// go("debug", 1);
+// go("debug");
 
 go("menu");

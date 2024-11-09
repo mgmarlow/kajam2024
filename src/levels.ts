@@ -1,6 +1,5 @@
 // prettier-ignore
 export const levels = [
-  // tutorial: spikes = ghost
   {
     title: "rebirth",
     data: [
@@ -12,34 +11,23 @@ export const levels = [
     ],
   },
   {
-    title: "energy",
+    title: "push-pull",
     data: [
-      ".........",
-      ". .     .",
-      ". . m   .",
-      ".pb    x.",
-      "........."
-    ],
-  },
-
-  // TODO: this changes everything.
-  {
-    title: "pushy kat",
-    data: [
-      ".........",
-      ".  pbx  .",
-      ".    bb..",
-      ".       .",
-      "........."
+      "........",
+      ".  ...p.",
+      ".  .x. .",
+      ".  . . .",
+      ".  b   .",
+      "........"
     ]
   },
   {
-    title: "serpentine",
+    title: "ring around the rosie",
     data: [
       ".........",
-      ".  b b  .",
-      ".. bxb  .",
-      "..   b p.",
+      ".  x b  .",
+      ".  . . p.",
+      ".  b .  .",
       "........."
     ]
   },
@@ -50,17 +38,6 @@ export const levels = [
       ".  bx.  .",
       ".  b   p.",
       ".  .  . .",
-      "........."
-    ]
-  },
-  // Pulling around a circle is neat.
-  {
-    title: "ring around the rosie",
-    data: [
-      ".........",
-      ".  x b  .",
-      ".  . . p.",
-      ".  b .  .",
       "........."
     ]
   },
@@ -75,31 +52,35 @@ export const levels = [
       ".......  "
     ]
   },
-
-  // TODO:
   {
-    title: "the bends",
+    title: "energy",
     data: [
       ".........",
-      ".       .",
-      ".p      .",
-      "..... b .",
-      "    . x .",
-      "    ....."
-    ]
+      ". .     .",
+      ". . m   .",
+      ".pb    x.",
+      "........."
+    ],
   },
-
-  // TODO:
-  // {
-  //   title: "chimney",
-  //   data: [
-  //     ".......",
-  //     ".p.....",
-  //     ".b    .",
-  //     ". ...b.",
-  //     ". x b .",
-  //     "..    .",
-  //     "......."
-  //   ]
-  // },
+  {
+    title: "chimney",
+    data: [
+      "......",
+      ".    .",
+      ".  .m.",
+      ". b.x.",
+      ".   p.",
+      "......"
+    ],
+  },
+  {
+    title: "not so fast",
+    data: [
+      ".........",
+      ". b .  m.",
+      ". b m   .",
+      ".p     x.",
+      "........."
+    ],
+  },
 ];
