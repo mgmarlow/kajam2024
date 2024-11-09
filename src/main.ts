@@ -1,5 +1,6 @@
 import kaplay, { GameObj, TileComp, Vec2 } from "kaplay";
 import "kaplay/global";
+import { levels } from "./levels";
 
 kaplay({
   background: [74, 48, 82],
@@ -11,8 +12,10 @@ loadSprite("kat", "./sprites/kat.png");
 loadSprite("ghost", "./sprites/ghosty.png");
 loadSprite("wall", "./sprites/steel.png");
 loadSprite("spike", "./sprites/spike.png");
-loadSprite("exit", "./sprites/portal.png");
+loadSprite("portalActive", "./sprites/portal.png");
+loadSprite("portalInactive", "./sprites/portal-inactive.png");
 loadSprite("box", "./sprites/grass.png");
+loadSprite("lightning", "./sprites/lightening.png");
 
 // Level and Tile components don't sync the level's spatialMap
 // when using a tile's moveRight/move* methods. That means we
@@ -42,94 +45,6 @@ interface Level {
   data: string[];
 }
 
-// prettier-ignore
-const levels = [
-  // tutorial: spikes = ghost
-  {
-    title: "rebirth",
-    data: [
-      ".........",
-      ".   x   .",
-      ".   x  p.",
-      ".   x   .",
-      "........."
-    ],
-  },
-  // TODO: more intro puzzles with pushing
-  {
-    title: "pushy kat",
-    data: [
-      ".........",
-      ".  pbx  .",
-      ".    bb..",
-      ".       .",
-      "........."
-    ]
-  },
-  {
-    title: "serpentine",
-    data: [
-      ".........",
-      ".  b b  .",
-      ".. bxb  .",
-      "..   b p.",
-      "........."
-    ]
-  },
-  {
-    title: "longitudinal",
-    data: [
-      ".........",
-      ".  bx.  .",
-      ".  b   p.",
-      ".  .  . .",
-      "........."
-    ]
-  },
-  // Pulling around a circle is neat.
-  {
-    title: "ring around the rosie",
-    data: [
-      ".........",
-      ".  x b  .",
-      ".  . . p.",
-      ".  b .  .",
-      "........."
-    ]
-  },
-  {
-    title: "pocket full of posies",
-    data: [
-      ".........",
-      ". x x bp.",
-      ". .b  ...",
-      ".   .b.  ",
-      ". x x .  ",
-      ".......  "
-    ]
-  },
-
-  // TODO:
-  // {
-  //   title: "chimney",
-  //   data: [
-  //     ".......",
-  //     ".p.....",
-  //     ".b    .",
-  //     ". ...b.",
-  //     ". x b .",
-  //     "..    .",
-  //     "......."
-  //   ]
-  // },
-];
-
-// scene("debug", (n) => {
-//   currentLevel = n;
-//   go("game", levels[currentLevel].data);
-// });
-// go("debug", 7);
-
 scene("selected", (level: Level) => {
   add([text(level.title), pos(center().add(0, -50)), anchor("center")]);
   add([text("press x"), pos(center().add(0, 50)), anchor("center")]);
@@ -154,10 +69,11 @@ scene("menu", () => {
 });
 
 type Action =
-  | { kind: "move"; from: Vec2; dir: Vec2; tag: string }
+  | { kind: "move"; obj: GameObj; dir: Vec2; tag: string }
   | { kind: "rebirth" };
 
 scene("game", (levelData: string[]) => {
+  let portalsActive = false;
   const history = [];
   const level = addLevel(levelData, {
     tileWidth: TILE_SIZE,
@@ -166,8 +82,9 @@ scene("game", (levelData: string[]) => {
       k: ({ x, y }) => [sprite("kat"), coord(x, y), z(100), "kat", "player"],
       ".": ({ x, y }) => [sprite("wall"), coord(x, y), "wall"],
       x: ({ x, y }) => [sprite("spike"), coord(x, y), "spike"],
-      p: ({ x, y }) => [sprite("exit"), coord(x, y), "exit"],
+      p: ({ x, y }) => [sprite("portalInactive"), coord(x, y), "exit"],
       b: ({ x, y }) => [sprite("box"), coord(x, y), "box"],
+      m: ({ x, y }) => [sprite("lightning"), coord(x, y), "lightning"],
     },
   });
 
@@ -188,25 +105,38 @@ scene("game", (levelData: string[]) => {
     }, []);
   };
 
-  const find = (v: Vec2): GameObj[] => cmap[serialize(v)] || [];
+  const getTiles = (v: Vec2): GameObj[] => cmap[serialize(v)] || [];
 
-  // There are only a few cases where we care that
-  // there are multiple objs in a tile, e.g. player + spike.
-  const findFirst = (v: Vec2, tag: string = undefined): GameObj | undefined => {
-    const tiles = find(v);
-    return tag ? tiles.find((t) => t.is(tag)) : tiles[0];
-  };
+  const hasTag = (cmps: GameObj[], tag: string | string[]) =>
+    cmps.findIndex((cmp) => {
+      return typeof tag === "string" ? cmp.is(tag) : tag.some((t) => cmp.is(t));
+    }) !== -1;
 
   let cmap = createCMap();
   const updateCMap = () => {
     cmap = createCMap();
+
+    const nextPortalsActive = cmap
+      .filter((cmps) => cmps.find((cmp: GameObj) => cmp.is("lightning")))
+      .every((cmps) => {
+        return cmps.findIndex((cmp: GameObj) => cmp.is("box")) !== -1;
+      });
+
+    if (portalsActive !== nextPortalsActive) {
+      const nextSprite = nextPortalsActive ? "portalActive" : "portalInactive";
+      level.get("exit").forEach(exit => {
+        exit.unuse("sprite");
+        exit.use(sprite(nextSprite));
+      })
+    }
+
+    portalsActive = nextPortalsActive;
   };
 
   const commitActions = (actions: Action[]) => {
     actions.forEach((action) => {
       if (action.kind === "move") {
-        const obj = findFirst(action.from, action.tag);
-        obj.cmove(action.dir);
+        action.obj.cmove(action.dir);
       } else if (action.kind === "rebirth") {
         player.unuse("sprite");
         player.unuse("kat");
@@ -227,8 +157,7 @@ scene("game", (levelData: string[]) => {
     const recent: Action[] = history.pop();
     recent.reverse().forEach((action) => {
       if (action.kind === "move") {
-        const obj = findFirst(action.from.add(action.dir), action.tag);
-        obj.cmove(vec2(0, 0).sub(action.dir));
+        action.obj.cmove(vec2(0, 0).sub(action.dir));
       } else if (action.kind === "rebirth") {
         player.unuse("sprite");
         player.unuse("ghost");
@@ -240,83 +169,82 @@ scene("game", (levelData: string[]) => {
     updateCMap();
   };
 
+  const advanceLevel = () => {
+    currentLevel++;
+    if (levels[currentLevel]) {
+      go("selected", levels[currentLevel]);
+    } else {
+      go("win");
+    }
+  };
+
   const move = (dir: Vec2) => {
+    const moves = [];
     const playerMoveTo = player.cvec.add(dir);
-    const playerMoveToObj: GameObj | undefined = findFirst(playerMoveTo);
-    const moves: Action[] = [];
+    const playerDestinationTiles = getTiles(playerMoveTo);
 
-    // Pulling blocks when a ghost.
-    if (player.is("ghost")) {
-      const playerMoveAway = player.cvec.sub(dir);
-      const playerMoveAwayObj: GameObj | undefined = findFirst(playerMoveAway);
-      // Player and spike would occupy a single tile spot.
-      const playerTiles = find(player.cvec);
-
-      if (
-        playerMoveAwayObj?.is("box") &&
-        playerTiles.find((tile) => tile.is("spike"))
-      ) {
-          // ignore
-      } else if (
-        (!playerMoveToObj || playerMoveToObj.is("spike")) &&
-        playerMoveAwayObj?.is("box")
-      ) {
-        moves.push({
-          kind: "move",
-          tag: "box",
-          from: playerMoveAway,
-          dir,
-        });
-      }
+    if (hasTag(playerDestinationTiles, "wall")) {
+      return;
     }
 
-    // Pushing blocks when a kat.
-    if (playerMoveToObj) {
-      if (playerMoveToObj.is("exit") && player.is("ghost")) {
-        currentLevel++;
-        if (levels[currentLevel]) {
-          go("selected", levels[currentLevel]);
-        } else {
-          go("win");
-        }
+    if (player.is("ghost")) {
+      // Win condition
+      if (portalsActive && hasTag(playerDestinationTiles, "exit")) {
+        advanceLevel();
         return;
       }
 
-      if (playerMoveToObj.is("wall")) {
+      // Ghost cannot push blocks.
+      if (hasTag(playerDestinationTiles, "box")) {
         return;
       }
 
-      if (playerMoveToObj.is("spike") && player.is("kat")) {
-        moves.push({ kind: "rebirth" });
-      }
+      // Pulling blocks
+      const playerMoveAway = player.cvec.sub(dir);
+      const playerMoveAwayTiles = getTiles(playerMoveAway);
 
-      if (player.is("ghost") && playerMoveToObj.is("box")) {
-        return;
-      }
+      if (hasTag(playerMoveAwayTiles, "box")) {
+        const box = playerMoveAwayTiles.find((cmp) => cmp.is("box"));
+        const boxMoveTo = box.cvec.add(dir);
+        const boxDestinationTiles = getTiles(boxMoveTo);
 
-      if (playerMoveToObj.is("box")) {
-        const boxMoveTo = playerMoveTo.add(dir);
-        const boxMoveToObj: GameObj | undefined = findFirst(boxMoveTo);
-
-        if (boxMoveToObj) {
-          if (
-            boxMoveToObj.is("wall") ||
-            boxMoveToObj.is("box") ||
-            boxMoveToObj.is("exit")
-          ) {
-            return;
-          }
-
-          if (boxMoveToObj.is("spike")) {
-            return;
-          }
-        } else {
+        // Occupant of the box destination will always be the player.
+        // Player can pass through spikes, but a box cannot.
+        if (!hasTag(boxDestinationTiles, "spike")) {
           moves.push({
             kind: "move",
             tag: "box",
-            from: playerMoveTo,
+            obj: box,
             dir,
           });
+        }
+      }
+    } else if (player.is("kat")) {
+      // Rebirth on spike
+      if (hasTag(playerDestinationTiles, "spike")) {
+        moves.push({ kind: "rebirth" });
+      }
+
+      // Pushing blocks
+      if (hasTag(playerDestinationTiles, "box")) {
+        const box = playerDestinationTiles.find((cmp) => cmp.is("box"));
+        const boxMoveTo: Vec2 = box.cvec.add(dir);
+        const boxDestinationTiles = getTiles(boxMoveTo);
+
+        if (
+          boxDestinationTiles.length === 0 ||
+          (boxDestinationTiles.length === 1 &&
+            hasTag(boxDestinationTiles, "lightning"))
+        ) {
+          moves.push({
+            kind: "move",
+            tag: "box",
+            obj: box,
+            dir,
+          });
+        } else {
+          // Block player movement
+          return;
         }
       }
     }
@@ -324,7 +252,7 @@ scene("game", (levelData: string[]) => {
     moves.push({
       kind: "move",
       tag: "player",
-      from: player.cvec.clone(),
+      obj: player,
       dir,
     });
     commitActions(moves);
@@ -362,5 +290,11 @@ scene("win", () => {
     anchor("center"),
   ]);
 });
+
+// scene("debug", (n) => {
+//   currentLevel = n;
+//   go("game", levels[currentLevel].data);
+// });
+// go("debug", 1);
 
 go("menu");
