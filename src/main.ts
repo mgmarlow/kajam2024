@@ -46,9 +46,10 @@ const advanceLevel = (current: number) => {
   if (current < maxLevel) {
     go("level-select", current);
   } else {
-    maxLevel++;
-    if (levels[maxLevel]) {
-      go("level-select", maxLevel);
+    const nextLevel = maxLevel + 1;
+    if (levels[nextLevel]) {
+      maxLevel = nextLevel;
+      go("level-select", nextLevel);
     } else {
       go("win");
     }
@@ -313,7 +314,6 @@ scene("win", () => {
 
 scene("level-select", (initialSelected = 0) => {
   let selected = initialSelected;
-  const levelProgress = Math.min(maxLevel + 1, levels.length);
 
   const completedColor = Color.fromHex("14532e");
   const unavailableColor = Color.fromHex("9e4228");
@@ -374,13 +374,13 @@ scene("level-select", (initialSelected = 0) => {
   onKeyPress(["left", "a"], () => {
     selected -= 1;
     if (selected < 0) {
-      selected = maxLevel;
+      selected = 0;
     }
     updateSelected();
   });
 
   onKeyPress(["tab", "right", "d"], () => {
-    selected = (selected + 1) % levelProgress;
+    selected = Math.min((selected + 1), levels.length);
     updateSelected();
   });
 
