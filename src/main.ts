@@ -44,11 +44,11 @@ let maxLevel = 0;
 
 const advanceLevel = (current: number) => {
   if (current < maxLevel) {
-    go("level-select");
+    go("level-select", current);
   } else {
     maxLevel++;
     if (levels[maxLevel]) {
-      go("selected", maxLevel);
+      go("level-select", maxLevel);
     } else {
       go("win");
     }
@@ -60,33 +60,12 @@ interface Level {
   data: string[];
 }
 
-scene("selected", (current: number) => {
-  const level: Level = levels[current];
-
-  add([text(level.title), pos(center().add(0, -50)), anchor("center")]);
-  add([text("press x"), pos(center().add(0, 50)), anchor("center")]);
-
-  onKeyPress("x", () => {
-    go("game", current);
-  });
-
-  onKeyPress("escape", () => {
-    go("level-select");
-  });
-});
-
 scene("menu", () => {
-  let selectedLevel = 0;
-
-  add([text("kat's ghost"), pos(center().add(0, -150)), anchor("center")]);
-  add([text("press x to start"), pos(center().add(0, -100)), anchor("center")]);
-
-  add([text("arrows/wasd: move"), pos(center()), anchor("center")]);
-  add([text("z: undo"), pos(center().add(0, 50)), anchor("center")]);
-  add([text("r: restart"), pos(center().add(0, 100)), anchor("center")]);
+  add([text("kat's ghost"), pos(center().add(0, -50)), anchor("center")]);
+  add([text("press x to start"), pos(center().add(0, 50)), anchor("center")]);
 
   onKeyPress("x", () => {
-    go("selected", selectedLevel);
+    go("level-select");
   });
 });
 
@@ -116,6 +95,12 @@ scene("game", (current: number) => {
   level.pos = center();
   level.pos.x -= (level.numColumns() * TILE_SIZE) / 2;
   level.pos.y -= (level.numRows() * TILE_SIZE) / 2;
+
+  add([
+    text("z: undo, r: reset"),
+    pos(vec2(center().x, height() - 30)),
+    anchor("center"),
+  ]);
 
   const player = level.spawn("k", vec2(1, 1));
 
@@ -304,7 +289,7 @@ scene("game", (current: number) => {
   });
 
   onKeyPress("escape", () => {
-    go("level-select");
+    go("level-select", current);
   });
 });
 
@@ -326,8 +311,8 @@ scene("win", () => {
   });
 });
 
-scene("level-select", () => {
-  let selected = 0;
+scene("level-select", (initialSelected = 0) => {
+  let selected = initialSelected;
   const levelProgress = Math.min(maxLevel + 1, levels.length);
 
   const completedColor = Color.fromHex("14532e");
@@ -355,7 +340,7 @@ scene("level-select", () => {
   ]);
 
   const updateSelected = () => {
-    titlePreview.text = levels[selected].title;
+    titlePreview.text = levels[selected].title + " (x)";
 
     get("menuitem").forEach((cmp) => {
       if (cmp.idx === selected) {
@@ -379,7 +364,7 @@ scene("level-select", () => {
     const row = i % rowLength;
     const col = Math.floor(i / rowLength);
     const offset = (row / rowLength) * totalWidth - totalWidth / 2;
-    const pos = center().add(offset, col * (spacing + tileSize));
+    const pos = center().add(offset, col * (spacing + tileSize) - 50);
 
     createTile(i, pos);
   });
