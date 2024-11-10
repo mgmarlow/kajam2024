@@ -65,8 +65,13 @@ scene("selected", (current: number) => {
 
   add([text(level.title), pos(center().add(0, -50)), anchor("center")]);
   add([text("press x"), pos(center().add(0, 50)), anchor("center")]);
+
   onKeyPress("x", () => {
     go("game", current);
+  });
+
+  onKeyPress("escape", () => {
+    go("level-select");
   });
 });
 
@@ -90,8 +95,9 @@ type Action =
   | { kind: "rebirth" };
 
 scene("game", (current: number) => {
-  const levelData = levels[current].data;
   let portalsActive = false;
+
+  const levelData = levels[current].data;
   const history = [];
   const level = addLevel(levelData, {
     tileWidth: TILE_SIZE,
@@ -314,6 +320,10 @@ scene("win", () => {
     pos(center().add(vec2(0, 100))),
     anchor("center"),
   ]);
+
+  onKeyPress("escape", () => {
+    go("level-select");
+  });
 });
 
 scene("level-select", () => {
@@ -365,7 +375,7 @@ scene("level-select", () => {
 
   const totalWidth = rowLength * (tileSize + spacing);
 
-  levels.forEach((level, i) => {
+  levels.forEach((_, i) => {
     const row = i % rowLength;
     const col = Math.floor(i / rowLength);
     const offset = (row / rowLength) * totalWidth - totalWidth / 2;
