@@ -40,18 +40,33 @@ const coord = (cx: number, cy: number) => {
   };
 };
 
-let currentLevel = 0;
+let maxLevel = 0;
+
+const advanceLevel = (current: number) => {
+  if (current < maxLevel) {
+    go("level-select");
+  } else {
+    maxLevel++;
+    if (levels[maxLevel]) {
+      go("selected", maxLevel);
+    } else {
+      go("win");
+    }
+  }
+};
 
 interface Level {
   title: string;
   data: string[];
 }
 
-scene("selected", (level: Level) => {
+scene("selected", (current: number) => {
+  const level: Level = levels[current];
+
   add([text(level.title), pos(center().add(0, -50)), anchor("center")]);
   add([text("press x"), pos(center().add(0, 50)), anchor("center")]);
   onKeyPress("x", () => {
-    go("game", level.data);
+    go("game", current);
   });
 });
 
@@ -66,7 +81,7 @@ scene("menu", () => {
   add([text("r: restart"), pos(center().add(0, 100)), anchor("center")]);
 
   onKeyPress("x", () => {
-    go("selected", levels[selectedLevel]);
+    go("selected", selectedLevel);
   });
 });
 
@@ -74,7 +89,8 @@ type Action =
   | { kind: "move"; obj: GameObj; dir: Vec2; tag: string }
   | { kind: "rebirth" };
 
-scene("game", (levelData: string[]) => {
+scene("game", (current: number) => {
+  const levelData = levels[current].data;
   let portalsActive = false;
   const history = [];
   const level = addLevel(levelData, {
@@ -177,15 +193,6 @@ scene("game", (levelData: string[]) => {
     updateCMap();
   };
 
-  const advanceLevel = () => {
-    currentLevel++;
-    if (levels[currentLevel]) {
-      go("selected", levels[currentLevel]);
-    } else {
-      go("win");
-    }
-  };
-
   const move = (dir: Vec2) => {
     const moves = [];
     const playerMoveTo = player.cvec.add(dir);
@@ -198,7 +205,7 @@ scene("game", (levelData: string[]) => {
     if (player.is("ghost")) {
       // Win condition
       if (portalsActive && hasTag(playerDestinationTiles, "exit")) {
-        advanceLevel();
+        advanceLevel(current);
         return;
       }
 
@@ -287,7 +294,7 @@ scene("game", (levelData: string[]) => {
   });
 
   onKeyPress("r", () => {
-    go("game", levels[currentLevel].data);
+    go("game", current);
   });
 
   onKeyPress("escape", () => {
@@ -311,6 +318,7 @@ scene("win", () => {
 
 scene("level-select", () => {
   let selected = 0;
+  const levelProgress = Math.min(maxLevel + 1, levels.length);
 
   const completedColor = Color.fromHex("14532e");
   const unavailableColor = Color.fromHex("9e4228");
@@ -342,8 +350,10 @@ scene("level-select", () => {
     get("menuitem").forEach((cmp) => {
       if (cmp.idx === selected) {
         cmp.color = selectedColor;
-        // } else if (cmp.idx === 3) {
-        // cmp.color = nextColor;
+      } else if (cmp.idx < maxLevel) {
+        cmp.color = completedColor;
+      } else if (cmp.idx === maxLevel) {
+        cmp.color = nextColor;
       } else {
         cmp.color = unavailableColor;
       }
@@ -366,21 +376,21 @@ scene("level-select", () => {
 
   updateSelected();
 
-  onKeyPress("left", () => {
+  onKeyPress(["left", "a"], () => {
     selected -= 1;
     if (selected < 0) {
-      selected = levels.length - 1;
+      selected = maxLevel;
     }
     updateSelected();
   });
 
-  onKeyPress(["tab", "right"], () => {
-    selected = (selected + 1) % levels.length;
+  onKeyPress(["tab", "right", "d"], () => {
+    selected = (selected + 1) % levelProgress;
     updateSelected();
   });
 
   onKeyPress(["x", "enter"], () => {
-    go("game", levels[selected].data);
+    go("game", selected);
   });
 });
 
