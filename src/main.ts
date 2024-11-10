@@ -2,8 +2,10 @@ import kaplay, { GameObj, TileComp, Vec2 } from "kaplay";
 import "kaplay/global";
 import { levels } from "./levels";
 
+// Palette credit:
+// https://lospec.com/palette-list/pumpkin-patch-13
 kaplay({
-  background: [74, 48, 82],
+  background: [45, 33, 51],
 });
 
 const TILE_SIZE = 64;
@@ -128,10 +130,10 @@ scene("game", (levelData: string[]) => {
 
     if (portalsActive !== nextPortalsActive) {
       const nextSprite = nextPortalsActive ? "portalActive" : "portalInactive";
-      level.get("exit").forEach(exit => {
+      level.get("exit").forEach((exit) => {
         exit.unuse("sprite");
         exit.use(sprite(nextSprite));
-      })
+      });
     }
 
     portalsActive = nextPortalsActive;
@@ -287,6 +289,10 @@ scene("game", (levelData: string[]) => {
   onKeyPress("r", () => {
     go("game", levels[currentLevel].data);
   });
+
+  onKeyPress("escape", () => {
+    go("level-select");
+  });
 });
 
 scene("win", () => {
@@ -303,10 +309,79 @@ scene("win", () => {
   ]);
 });
 
-// scene("debug", (n = levels.length - 1) => {
-//   currentLevel = n;
-//   go("game", levels[currentLevel].data);
-// });
-// go("debug", 4);
+scene("level-select", () => {
+  let selected = 0;
+
+  const completedColor = Color.fromHex("14532e");
+  const unavailableColor = Color.fromHex("9e4228");
+  const selectedColor = Color.fromHex("6baa9a");
+  const nextColor = Color.fromHex("7f0f28");
+
+  const rowLength = 5;
+  const tileSize = 48;
+  const spacing = 32;
+
+  const menuitem = (idx: number) => {
+    return {
+      id: "menuitem",
+      requires: ["color"],
+      idx,
+      selected: false,
+    };
+  };
+
+  const titlePreview = add([
+    text(levels[selected].title),
+    pos(center().sub(0, height() / 4)),
+    anchor("center"),
+  ]);
+
+  const updateSelected = () => {
+    titlePreview.text = levels[selected].title;
+
+    get("menuitem").forEach((cmp) => {
+      if (cmp.idx === selected) {
+        cmp.color = selectedColor;
+        // } else if (cmp.idx === 3) {
+        // cmp.color = nextColor;
+      } else {
+        cmp.color = unavailableColor;
+      }
+    });
+  };
+
+  const createTile = (i: number, { x, y }: Vec2) =>
+    add([pos(x, y), rect(tileSize, tileSize, { fill: true }), menuitem(i)]);
+
+  const totalWidth = rowLength * (tileSize + spacing);
+
+  levels.forEach((level, i) => {
+    const row = i % rowLength;
+    const col = Math.floor(i / rowLength);
+    const offset = (row / rowLength) * totalWidth - totalWidth / 2;
+    const pos = center().add(offset, col * (spacing + tileSize));
+
+    createTile(i, pos);
+  });
+
+  updateSelected();
+
+  onKeyPress("left", () => {
+    selected -= 1;
+    if (selected < 0) {
+      selected = levels.length - 1;
+    }
+    updateSelected();
+  });
+
+  onKeyPress(["tab", "right"], () => {
+    selected = (selected + 1) % levels.length;
+    updateSelected();
+  });
+
+  onKeyPress(["x", "enter"], () => {
+    go("game", levels[selected].data);
+  });
+});
 
 go("menu");
