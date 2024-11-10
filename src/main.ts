@@ -56,11 +56,6 @@ const advanceLevel = (current: number) => {
   }
 };
 
-interface Level {
-  title: string;
-  data: string[];
-}
-
 scene("menu", () => {
   add([text("kat's ghost"), pos(center().add(0, -50)), anchor("center")]);
   add([text("press x to start"), pos(center().add(0, 50)), anchor("center")]);
@@ -97,11 +92,14 @@ scene("game", (current: number) => {
   level.pos.x -= (level.numColumns() * TILE_SIZE) / 2;
   level.pos.y -= (level.numRows() * TILE_SIZE) / 2;
 
-  add([
-    text("z: undo, r: reset"),
-    pos(vec2(center().x, height() - 30)),
-    anchor("center"),
-  ]);
+  // Lazy fix for some text overlap
+  if (current <= 5) {
+    add([
+      text("z: undo, r: reset"),
+      pos(vec2(center().x, height() - 30)),
+      anchor("center"),
+    ]);
+  }
 
   const player = level.spawn("k", vec2(1, 1));
 

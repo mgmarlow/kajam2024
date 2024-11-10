@@ -1,5 +1,10 @@
+export interface Level {
+  title: string;
+  data: string[];
+}
+
 // prettier-ignore
-export const levels = [
+export const levels: Level[] = [
   {
     title: "rebirth",
     data: [
