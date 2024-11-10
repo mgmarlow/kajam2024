@@ -378,7 +378,7 @@ scene("level-select", (initialSelected = 0) => {
   });
 
   onKeyPress(["tab", "right", "d"], () => {
-    selected = Math.min((selected + 1), levels.length);
+    selected = Math.min((selected + 1), maxLevel);
     updateSelected();
   });
 
