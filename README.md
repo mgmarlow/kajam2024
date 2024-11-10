@@ -1,27 +1,4 @@
-# Folder structure
+# kat's ghost
 
-- `src` - source code for your kaplay project
-- `www` - distribution folder, contains your index.html, built js bundle and static assets
+A block-pushing puzzle game built for KAJAM 2024. [Play it here](https://mgmarlow.itch.io/kajam2024).
 
-
-## Development
-
-```sh
-$ yarn run dev
-```
-
-will start a dev server at http://localhost:8000
-
-## Distribution
-
-```sh
-$ yarn run build
-```
-
-will build your js files into `www/main.js`
-
-```sh
-$ yarn run bundle
-```
-
-will build your game and package into a .zip file, you can upload to your server or itch.io / newground etc.
