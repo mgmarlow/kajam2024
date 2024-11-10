@@ -11,7 +11,7 @@ export const levels = [
     ],
   },
   {
-    title: "push-pull",
+    title: "give and take",
     data: [
       "........",
       ".  ...p.",
