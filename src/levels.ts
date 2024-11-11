@@ -46,8 +46,8 @@ export const levels: Level[] = [
       "........."
     ]
   },
-  // TODO: here maybe, more blocks cant be pulled over spikes
   {
+    // Difficulty spike
     title: "longitudinal",
     data: [
       ".........",
@@ -58,6 +58,7 @@ export const levels: Level[] = [
     ]
   },
   {
+    // Difficulty spike
     title: "pocket full of posies",
     data: [
       ".........",
@@ -93,20 +94,22 @@ export const levels: Level[] = [
     title: "not so fast",
     data: [
       ".........",
-      ". b .  m.",
-      ". b m   .",
-      ".p     x.",
-      "........."
+      ".    m  .",
+      ". bb..x..",
+      ".p   m  .",
+      "...  ....",
+      "  ....   "
     ],
   },
   {
-    title: "orthogonality",
+    title: "chimney returns",
     data: [
-      ".........",
-      ". m  x  .",
-      ". m bbb .",
-      ".pm     .",
-      "........."
+      ".......",
+      ".  m  .",
+      ".b .m .",
+      ".pb.x .",
+      ".     .",
+      "......."
     ],
   },
   {
@@ -120,6 +123,7 @@ export const levels: Level[] = [
     ],
   },
   {
+    // Difficulty spike
     title: "mousetrap",
     data: [
       ".........",

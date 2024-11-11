@@ -10,6 +10,8 @@ kaplay({
 
 const TILE_SIZE = 64;
 
+const debug = false;
+
 loadSprite("kat", "./sprites/kat.png");
 loadSprite("ghost", "./sprites/ghosty.png");
 loadSprite("wall", "./sprites/steel.png");
@@ -215,7 +217,7 @@ scene("game", (current: number) => {
 
         // Occupant of the box destination will always be the player.
         // Player can pass through spikes, but a box cannot.
-        if (!hasTag(boxDestinationTiles, "spike")) {
+        if (!hasTag(boxDestinationTiles, ["spike", "exit"])) {
           moves.push({
             kind: "move",
             tag: "box",
@@ -378,7 +380,7 @@ scene("level-select", (initialSelected = 0) => {
   });
 
   onKeyPress(["tab", "right", "d"], () => {
-    selected = Math.min((selected + 1), maxLevel);
+    selected = Math.min(selected + 1, debug ? levels.length - 1 : maxLevel);
     updateSelected();
   });
 
