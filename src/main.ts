@@ -2,15 +2,16 @@ import kaplay, { GameObj, TileComp, Vec2 } from "kaplay";
 import "kaplay/global";
 import { levels } from "./levels";
 
+const debugMode = false
+
 // Palette credit:
 // https://lospec.com/palette-list/pumpkin-patch-13
 kaplay({
   background: [45, 33, 51],
+  debug: debugMode,
 });
 
 const TILE_SIZE = 64;
-
-const debug = false;
 
 loadSprite("kat", "./sprites/kat.png");
 loadSprite("ghost", "./sprites/ghosty.png");
@@ -58,9 +59,28 @@ const advanceLevel = (current: number) => {
   }
 };
 
+const centered = (offset: Vec2 = vec2(0)) => {
+  let evt: any; // Looks like a TS bug in kaplay.
+
+  return {
+    id: "centered",
+    requires: ["pos"],
+    add() {
+      this.pos = center().add(offset);
+
+      evt = onResize(() => {
+        this.pos = center().add(offset);
+      });
+    },
+    destroy() {
+      evt?.cancel();
+    },
+  };
+};
+
 scene("menu", () => {
-  add([text("kat's ghost"), pos(center().add(0, -50)), anchor("center")]);
-  add([text("press x to start"), pos(center().add(0, 50)), anchor("center")]);
+  add([text("kat's ghost"), anchor("center"), centered(vec2(0, -50))]);
+  add([text("press x to start"), anchor("center"), centered(vec2(0, 50))]);
 
   onKeyPress("x", () => {
     go("level-select");
